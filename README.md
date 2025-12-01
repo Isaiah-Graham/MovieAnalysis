@@ -1,1 +1,2 @@
 # MovieAnalysis
+For this project i wanted to create a simple program which just does some visulizations on a dataset. In the future if I return to this I would like to further this program by allowing any dataset based on film to be used. This was what I wanted to expand to however, due to time restraints and many errors. I Ultimately decided to just focus on just one dataset that I found. In this file I provided the dataset that I found on https://vincentarelbundock.github.io/Rdatasets/datasets.html. 
