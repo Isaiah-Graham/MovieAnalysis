@@ -1,0 +1,109 @@
+library(ggplot2)
+library(methods)
+library(readr)
+
+# Loading the dataset
+Movie <- read_csv("Movie.csv", show_col_types = FALSE)
+
+# Converting column names to lowercase
+colnames(Movie) <- tolower(colnames(Movie))
+
+# Column names
+score_col <- "score"
+box_office_col <- "box_office"
+genre_col <- "genre"
+
+#Using Methods
+setClass("MovieAnalysis",
+         slots = list(
+           summary = "ANY",
+           avg_box_office = "data.frame",
+           plot = "list"
+         ))
+
+setMethod("show", "MovieAnalysis", function(object) {
+  cat("Movie Analysis Summary")
+  print(object@summary)
+  cat("Average Box Office by Genre ")
+  print(object@avg_box_office)
+  cat("\nPlots are stored in object@plot as a list. Use results$data@plot$<name> to view.\n")
+})
+
+#The main analysis function 
+analyze_movies <- function(df, score_col, box_office_col, genre_col,
+                           actions = c("summary", "avg_box_office", "plots"),
+                           save_plots = FALSE) {
+  
+  required_cols <- c(score_col, box_office_col, genre_col)
+  missing_cols <- setdiff(required_cols, colnames(df))
+  if(length(missing_cols) > 0) stop(paste("Missing columns:", paste(missing_cols, collapse=", ")))
+  
+  # Computing the summary
+  summary_res <- if("summary" %in% actions) summary(df[[score_col]]) else NULL
+  
+  # Average box office per genre
+  avg_box_office_res <- if("avg_box_office" %in% actions) {
+    res <- aggregate(df[[box_office_col]] ~ df[[genre_col]], FUN = mean)
+    colnames(res) <- c(genre_col, paste0("avg_", box_office_col))
+    res
+  } else NULL
+  
+  # Generating the plots
+  plots <- list()
+  if("plots" %in% actions) {
+    
+    plots$scatter <- ggplot(df, aes_string(x = score_col, y = box_office_col, color = genre_col)) +
+      geom_point(size = 3, alpha = 0.7) +
+      theme_minimal(base_size = 14) +
+      labs(title = "Scores vs Box Office by Genre",
+           x = score_col,
+           y = paste0(box_office_col, " (millions)"))
+    
+    plots$hist_scores <- ggplot(df, aes_string(x = score_col)) +
+      geom_histogram(binwidth = 5, fill = "skyblue", color = "black") +
+      theme_minimal(base_size = 14) +
+      labs(title = "Distribution of Scores")
+    
+    plots$box_office_by_genre <- ggplot(df, aes_string(x = genre_col, y = box_office_col)) +
+      geom_boxplot(fill = "lightgreen") +
+      theme_minimal(base_size = 14) +
+      labs(title = "Box Office by Genre")
+    
+    plots$avg_box_office_bar <- ggplot(avg_box_office_res, aes_string(x = genre_col, y = paste0("avg_", box_office_col))) +
+      geom_col(fill = "orange") +
+      theme_minimal(base_size = 14) +
+      labs(title = "Average Box Office by Genre")
+    
+    if(save_plots) {
+      for(nm in names(plots)) {
+        ggsave(filename = paste0(nm, ".png"), plot = plots[[nm]], width = 8, height = 6)
+      }
+    }
+  }
+  
+#Printing summary and averages
+analysis <- new("MovieAnalysis",
+                  summary = summary_res,
+                  avg_box_office = avg_box_office_res,
+                  plot = plots)
+  
+  results <- list(data = analysis)
+  class(results) <- "movie_results"
+  
+show(analysis)
+  
+return(results)
+}
+
+# Analysis
+results <- analyze_movies(Movie,
+                          score_col = score_col,
+                          box_office_col = box_office_col,
+                          genre_col = genre_col,
+                          save_plots = FALSE)
+
+# Plots
+results$data@plot$scatter
+results$data@plot$hist_scores
+results$data@plot$box_office_by_genre
+results$data@plot$avg_box_office_bar
