@@ -1,0 +1,10 @@
+Package: MovieAnalysis
+Type: Package
+Title: Analyze Movie Data
+Version: 0.1
+Date: 2025-11-30
+Author: Isaiah Graham
+Maintainer: Isaiah Graham <grahami@usf.edu>
+License: MIT
+Imports: ggplot2, methods, readr
+Description: Analyze movie dataset with summary statistics, average box office by genre, and multiple visualizations.
